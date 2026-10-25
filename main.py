@@ -1,22 +1,22 @@
+#!/usr/bin/env python3
+
 import json
 import os
 import struct
 import sys
 
-QUAD = [[0, 0], [1, 0], [1, 1], [0, 1]]
-MASK = 0xFFFFFFFF
-
+q = [[0, 0], [1, 0], [1, 1], [0, 1]]
 
 def mix(a, b, c):
-    a = ((a - b - c) ^ (c >> 13)) & MASK
-    b = ((b - c - a) ^ (a << 8)) & MASK
-    c = ((c - a - b) ^ (b >> 13)) & MASK
-    a = ((a - b - c) ^ (c >> 12)) & MASK
-    b = ((b - c - a) ^ (a << 16)) & MASK
-    c = ((c - a - b) ^ (b >> 5)) & MASK
-    a = ((a - b - c) ^ (c >> 3)) & MASK
-    b = ((b - c - a) ^ (a << 10)) & MASK
-    c = ((c - a - b) ^ (b >> 15)) & MASK
+    a = ((a - b - c) ^ (c >> 13)) & 0xFFFFFFFF
+    b = ((b - c - a) ^ (a << 8)) & 0xFFFFFFFF
+    c = ((c - a - b) ^ (b >> 13)) & 0xFFFFFFFF
+    a = ((a - b - c) ^ (c >> 12)) & 0xFFFFFFFF
+    b = ((b - c - a) ^ (a << 16)) & 0xFFFFFFFF
+    c = ((c - a - b) ^ (b >> 5)) & 0xFFFFFFFF
+    a = ((a - b - c) ^ (c >> 3)) & 0xFFFFFFFF
+    b = ((b - c - a) ^ (a << 10)) & 0xFFFFFFFF
+    c = ((c - a - b) ^ (b >> 15)) & 0xFFFFFFFF
     return a, b, c
 
 
@@ -30,25 +30,25 @@ def string_id(text):
     c = 0
     i = 0
     while len(d) - i >= 12:
-        a = (a + word(d, i)) & MASK
-        b = (b + word(d, i + 4)) & MASK
-        c = (c + word(d, i + 8)) & MASK
+        a = (a + word(d, i)) & 0xFFFFFFFF
+        b = (b + word(d, i + 4)) & 0xFFFFFFFF
+        c = (c + word(d, i + 8)) & 0xFFFFFFFF
         a, b, c = mix(a, b, c)
         i += 12
-    c = (c + len(d)) & MASK
+    c = (c + len(d)) & 0xFFFFFFFF
     r = d[i:]
     k = len(r)
-    if k >= 11: c = (c + (r[10] << 24)) & MASK
-    if k >= 10: c = (c + (r[9] << 16)) & MASK
-    if k >= 9: c = (c + (r[8] << 8)) & MASK
-    if k >= 8: b = (b + (r[7] << 24)) & MASK
-    if k >= 7: b = (b + (r[6] << 16)) & MASK
-    if k >= 6: b = (b + (r[5] << 8)) & MASK
-    if k >= 5: b = (b + r[4]) & MASK
-    if k >= 4: a = (a + (r[3] << 24)) & MASK
-    if k >= 3: a = (a + (r[2] << 16)) & MASK
-    if k >= 2: a = (a + (r[1] << 8)) & MASK
-    if k >= 1: a = (a + r[0]) & MASK
+    if k >= 11: c = (c + (r[10] << 24)) & 0xFFFFFFFF
+    if k >= 10: c = (c + (r[9] << 16)) & 0xFFFFFFFF
+    if k >= 9: c = (c + (r[8] << 8)) & 0xFFFFFFFF
+    if k >= 8: b = (b + (r[7] << 24)) & 0xFFFFFFFF
+    if k >= 7: b = (b + (r[6] << 16)) & 0xFFFFFFFF
+    if k >= 6: b = (b + (r[5] << 8)) & 0xFFFFFFFF
+    if k >= 5: b = (b + r[4]) & 0xFFFFFFFF
+    if k >= 4: a = (a + (r[3] << 24)) & 0xFFFFFFFF
+    if k >= 3: a = (a + (r[2] << 16)) & 0xFFFFFFFF
+    if k >= 2: a = (a + (r[1] << 8)) & 0xFFFFFFFF
+    if k >= 1: a = (a + r[0]) & 0xFFFFFFFF
     return mix(a, b, c)[2]
 
 
@@ -100,7 +100,7 @@ def decode(data):
             block["tail"] = list(w[p:p + 2])
             p += 2
             blocks.append(block)
-        if not (n == 1 and elements[0] == {"id": 0, "uv": QUAD} and not blocks):
+        if not (n == 1 and elements[0] == {"id": 0, "uv": q} and not blocks):
             rec["elements"] = elements
             if blocks:
                 rec["blocks"] = blocks
@@ -126,7 +126,7 @@ def encode(records):
             raise ValueError("duplicate hash %08x" % a)
     out = [u(0), u(len(keyed))]
     for h, r in keyed:
-        elements = r.get("elements") or [{"id": 0, "uv": QUAD}]
+        elements = r.get("elements") or [{"id": 0, "uv": q}]
         out += [u(h), u(18), f(r["width"]), f(r["height"]), u(len(elements))]
         for e in elements:
             out += [u(e["id"]), u(len(e["uv"]))]
