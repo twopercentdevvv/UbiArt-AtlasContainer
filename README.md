@@ -16,11 +16,11 @@ python main.py atlascontainer.ckd
 ```
 Creates `atlascontainer.json`.
 
-You can also pass a file list as a second argument to generate paths instead of hashes (if they're found obviously): \
-Use `filelist.py` to generate this, running it in the root of your LUA data or extracted IPK.
+**You can also pass a file list as a second argument to generate paths instead of hashes (if they're found obviously):** \
 ```bash
 python main.py atlascontainer.ckd filelist.txt
 ```
+Use `filelist.py` to generate this, running it in the root of your LUA data or extracted IPK.
 
 **Convert `.json` to `.ckd`:**
 ```bash
