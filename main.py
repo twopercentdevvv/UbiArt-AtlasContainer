@@ -1,23 +1,22 @@
-#!/usr/bin/env python3
-
 import json
 import os
 import struct
 import sys
-import zlib
 
-q = [[0, 0], [1, 0], [1, 1], [0, 1]] # don't touch this
+QUAD = [[0, 0], [1, 0], [1, 1], [0, 1]]
+MASK = 0xFFFFFFFF
+
 
 def mix(a, b, c):
-    a = ((a - b - c) ^ (c >> 13)) & 0xFFFFFFFF
-    b = ((b - c - a) ^ (a << 8)) & 0xFFFFFFFF
-    c = ((c - a - b) ^ (b >> 13)) & 0xFFFFFFFF
-    a = ((a - b - c) ^ (c >> 12)) & 0xFFFFFFFF
-    b = ((b - c - a) ^ (a << 16)) & 0xFFFFFFFF
-    c = ((c - a - b) ^ (b >> 5)) & 0xFFFFFFFF
-    a = ((a - b - c) ^ (c >> 3)) & 0xFFFFFFFF
-    b = ((b - c - a) ^ (a << 10)) & 0xFFFFFFFF
-    c = ((c - a - b) ^ (b >> 15)) & 0xFFFFFFFF
+    a = ((a - b - c) ^ (c >> 13)) & MASK
+    b = ((b - c - a) ^ (a << 8)) & MASK
+    c = ((c - a - b) ^ (b >> 13)) & MASK
+    a = ((a - b - c) ^ (c >> 12)) & MASK
+    b = ((b - c - a) ^ (a << 16)) & MASK
+    c = ((c - a - b) ^ (b >> 5)) & MASK
+    a = ((a - b - c) ^ (c >> 3)) & MASK
+    b = ((b - c - a) ^ (a << 10)) & MASK
+    c = ((c - a - b) ^ (b >> 15)) & MASK
     return a, b, c
 
 
@@ -31,25 +30,25 @@ def string_id(text):
     c = 0
     i = 0
     while len(d) - i >= 12:
-        a = (a + word(d, i)) & 0xFFFFFFFF
-        b = (b + word(d, i + 4)) & 0xFFFFFFFF
-        c = (c + word(d, i + 8)) & 0xFFFFFFFF
+        a = (a + word(d, i)) & MASK
+        b = (b + word(d, i + 4)) & MASK
+        c = (c + word(d, i + 8)) & MASK
         a, b, c = mix(a, b, c)
         i += 12
-    c = (c + len(d)) & 0xFFFFFFFF
+    c = (c + len(d)) & MASK
     r = d[i:]
     k = len(r)
-    if k >= 11: c = (c + (r[10] << 24)) & 0xFFFFFFFF
-    if k >= 10: c = (c + (r[9] << 16)) & 0xFFFFFFFF
-    if k >= 9: c = (c + (r[8] << 8)) & 0xFFFFFFFF
-    if k >= 8: b = (b + (r[7] << 24)) & 0xFFFFFFFF
-    if k >= 7: b = (b + (r[6] << 16)) & 0xFFFFFFFF
-    if k >= 6: b = (b + (r[5] << 8)) & 0xFFFFFFFF
-    if k >= 5: b = (b + r[4]) & 0xFFFFFFFF
-    if k >= 4: a = (a + (r[3] << 24)) & 0xFFFFFFFF
-    if k >= 3: a = (a + (r[2] << 16)) & 0xFFFFFFFF
-    if k >= 2: a = (a + (r[1] << 8)) & 0xFFFFFFFF
-    if k >= 1: a = (a + r[0]) & 0xFFFFFFFF
+    if k >= 11: c = (c + (r[10] << 24)) & MASK
+    if k >= 10: c = (c + (r[9] << 16)) & MASK
+    if k >= 9: c = (c + (r[8] << 8)) & MASK
+    if k >= 8: b = (b + (r[7] << 24)) & MASK
+    if k >= 7: b = (b + (r[6] << 16)) & MASK
+    if k >= 6: b = (b + (r[5] << 8)) & MASK
+    if k >= 5: b = (b + r[4]) & MASK
+    if k >= 4: a = (a + (r[3] << 24)) & MASK
+    if k >= 3: a = (a + (r[2] << 16)) & MASK
+    if k >= 2: a = (a + (r[1] << 8)) & MASK
+    if k >= 1: a = (a + r[0]) & MASK
     return mix(a, b, c)[2]
 
 
@@ -101,7 +100,7 @@ def decode(data):
             block["tail"] = list(w[p:p + 2])
             p += 2
             blocks.append(block)
-        if not (n == 1 and elements[0] == {"id": 0, "uv": q} and not blocks):
+        if not (n == 1 and elements[0] == {"id": 0, "uv": QUAD} and not blocks):
             rec["elements"] = elements
             if blocks:
                 rec["blocks"] = blocks
@@ -112,6 +111,8 @@ def decode(data):
 
 
 def key_of(rec):
+    if "path" in rec:
+        return string_id(rec["path"])
     h = rec["hash"]
     return int(h, 16) if isinstance(h, str) else int(h)
 
@@ -125,7 +126,7 @@ def encode(records):
             raise ValueError("duplicate hash %08x" % a)
     out = [u(0), u(len(keyed))]
     for h, r in keyed:
-        elements = r.get("elements") or [{"id": 0, "uv": q}]
+        elements = r.get("elements") or [{"id": 0, "uv": QUAD}]
         out += [u(h), u(18), f(r["width"]), f(r["height"]), u(len(elements))]
         for e in elements:
             out += [u(e["id"]), u(len(e["uv"]))]
@@ -145,8 +146,8 @@ def encode(records):
     return b"".join(out)
 
 
-def add(records, hash, width, height, elements=None, blocks=None):
-    rec = {"hash": hash, "width": float(width), "height": float(height)}
+def add(records, path, width, height, elements=None, blocks=None):
+    rec = {"path": path, "width": float(width), "height": float(height)}
     if elements:
         rec["elements"] = elements
     if blocks:
@@ -165,54 +166,12 @@ def write(path, records):
         f.write(encode(records))
 
 
-def variants(name):
-    name = name.strip().replace("\\", "/")
-    if len(name) > 1 and name[1] == ":":
-        name = name[2:]
-    parts = [p for p in name.split("/") if p and p != "."]
-    for i in range(len(parts)):
-        s = "/".join(parts[i:])
-        forms = [("as is", s)]
-        if s.lower().endswith(".ckd"):
-            s = s[:-4]
-            forms.append(("no .ckd", s))
-        if "." in os.path.basename(s):
-            stem = s.rsplit(".", 1)[0]
-            forms.append(("no extension", stem))
-            forms += [("ext " + e, stem + e) for e in (".tga", ".png", ".dds")]
-        for label, text in forms:
-            yield "%s, first %d folders dropped" % (label, i), text
-            if text.lower() != text:
-                yield "%s, lowercase, first %d folders dropped" % (label, i), text.lower()
-
-
-def match(records, names):
-    keys = {key_of(r): r for r in records}
-    hits = []
-    for name in names:
-        for label, text in variants(name):
-            sid = string_id(text)
-            crc = zlib.crc32(text.encode("utf-8")) & 0xFFFFFFFF
-            swapped = int.from_bytes(crc.to_bytes(4, "big"), "little")
-            for hasher, h in (("stringid", sid), ("crc32", crc), ("crc32 swapped", swapped)):
-                if h in keys:
-                    hits.append({"name": name, "string": text, "how": label, "hasher": hasher, "hash": "%08x" % h, "record": keys[h]})
-    return hits
-
-
 def main():
     if len(sys.argv) < 2:
         sys.exit("no input file")
     src = sys.argv[1]
     stem, ext = os.path.splitext(src)
-    if len(sys.argv) > 2:
-        with open(sys.argv[2], encoding="utf-8", errors="ignore") as f:
-            names = [l.strip() for l in f if l.strip()]
-        hits = match(read(src), names)
-        for h in hits:
-            print("%s\t%s\t%s\t%s\t%s\t%gx%g" % (h["name"], h["string"], h["how"], h["hasher"], h["hash"], h["record"]["width"], h["record"]["height"]))
-        print("%d of %d names matched" % (len({h["name"] for h in hits}), len(names)))
-    elif ext.lower() == ".json":
+    if ext.lower() == ".json":
         with open(src, encoding="utf-8") as f:
             write(stem + ".ckd", json.load(f))
     else:
