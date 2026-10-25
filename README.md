@@ -16,7 +16,7 @@ python main.py atlascontainer.ckd
 ```
 Creates `atlascontainer.json`.
 
-**You can also pass a file list as a second argument to generate paths instead of hashes (if they're found obviously):** \
+**You can also pass a file list as a second argument to generate paths instead of hashes (if they're found obviously):**
 ```bash
 python main.py atlascontainer.ckd filelist.txt
 ```
