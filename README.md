@@ -24,6 +24,6 @@ Use `filelist.py` to generate this, running it in the root of your LUA data or e
 
 **Convert `.json` to `.ckd`:**
 ```bash
-python script.py atlascontainer.json
+python main.py atlascontainer.json
 ```
 Creates `atlascontainer.ckd`.
