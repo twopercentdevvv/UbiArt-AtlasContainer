@@ -12,7 +12,7 @@ def main(d="."):
     for p in root.rglob("*"):
         if p.is_file():
             name = p.name.lower()
-            if any(name.endswith(e) for e in (".png", ".tga", ".png.ckd", ".tga.ckd")):
+            if any(name.endswith(e) for e in (".png", ".tga", ".jpg", ".png.ckd", ".tga.ckd")):
                 s = str(p).replace("\\", "/")
                 if s.lower().endswith(".ckd"):
                     s = s[:-4]
